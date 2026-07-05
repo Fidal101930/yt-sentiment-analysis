@@ -9,3 +9,16 @@ youtube = build(
 )
 
 print("Connection successful!")
+
+url = input("Enter YouTube video URL: ")
+video_id = url.split("v=")[1].split("&")[0]
+
+print("Video ID:", video_id)
+
+request = youtube.commentThreads().list(
+    part="snippet",
+    videoId=video_id,
+    maxResults=100
+)
+
+response = request.execute()
