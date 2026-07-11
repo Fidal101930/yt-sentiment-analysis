@@ -1,0 +1,28 @@
+MainScreen:
+
+<MainScreen>:
+    orientation: "vertical"
+    padding: 15
+    spacing: 10
+
+    TextInput:
+        id: video_url
+        hint_text: "Paste YouTube Video URL"
+        multiline: False
+        size_hint_y: None
+        height: "45dp"
+
+    Button:
+        text: "Analyze"
+        size_hint_y: None
+        height: "50dp"
+        on_release: root.analyze()
+
+    ScrollView:
+        Label:
+            id: result
+            text: "Results will appear here"
+            size_hint_y: None
+            text_size: self.width, None
+            height: self.texture_size[1]
+            valign: "top"
