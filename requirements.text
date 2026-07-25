@@ -1,7 +1,0 @@
-Flask
-gunicorn
-pandas
-textblob
-google-api-python-client
-matplotlib
-requests
