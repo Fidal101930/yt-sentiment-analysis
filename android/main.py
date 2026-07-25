@@ -1,10 +1,19 @@
 import os
+import io
+
+import matplotlib
+matplotlib.use("Agg")
+
+import matplotlib.pyplot as plt
+
+from io import BytesIO
 
 from kivy.app import App
 from kivy.lang import Builder
 from kivy.uix.boxlayout import BoxLayout
+from kivy.core.image import Image as CoreImage
 
-from app_client import analyze_video
+from youtube_utils import fetch_comments, analyze_sentiment
 
 
 class MainScreen(BoxLayout):
@@ -18,35 +27,79 @@ class MainScreen(BoxLayout):
 
         self.ids.result.text = "Analyzing..."
 
-        data = analyze_video(url)
+        try:
 
-        if "error" in data:
-            self.ids.result.text = data["error"]
-            return
+            # Fetch comments
+            comments = fetch_comments(url)
 
-        result_text = (
-            f"Total Comments : {data['total_comments']}\n"
-            f"Positive       : {data['positive']}\n"
-            f"Neutral        : {data['neutral']}\n"
-            f"Negative       : {data['negative']}\n\n"
-            "----------- COMMENTS -----------\n\n"
-        )
+            # Analyze sentiment
+            df = analyze_sentiment(comments)
 
-        # Display the first 20 comments
-        for item in data["comments"][:20]:
-            result_text += (
-                f"Sentiment : {item['Sentiment']}\n"
-                f"Comment   : {item['Comment']}\n"
-                "----------------------------------------\n"
+            sentiment_counts = df["Sentiment"].value_counts()
+
+            positive = int(sentiment_counts.get("Positive", 0))
+            neutral = int(sentiment_counts.get("Neutral", 0))
+            negative = int(sentiment_counts.get("Negative", 0))
+
+            # -----------------------
+            # Create Pie Chart
+            # -----------------------
+            plt.figure(figsize=(5, 5))
+
+            plt.pie(
+                [positive, neutral, negative],
+                labels=["Positive", "Neutral", "Negative"],
+                autopct="%1.1f%%",
+                startangle=90
             )
 
-        self.ids.result.text = result_text
+            plt.title("Sentiment Analysis")
+
+            buffer = io.BytesIO()
+
+            plt.savefig(buffer, format="png")
+
+            buffer.seek(0)
+
+            image = CoreImage(BytesIO(buffer.read()), ext="png")
+
+            self.ids.chart_image.texture = image.texture
+
+            plt.close()
+
+            # -----------------------
+            # Display Results
+            # -----------------------
+            result_text = (
+                f"Total Comments : {len(df)}\n"
+                f"Positive       : {positive}\n"
+                f"Neutral        : {neutral}\n"
+                f"Negative       : {negative}\n\n"
+                "----------- COMMENTS -----------\n\n"
+            )
+
+            for item in df.head(20).to_dict(orient="records"):
+
+                result_text += (
+                    f"Sentiment : {item['Sentiment']}\n"
+                    f"Comment   : {item['Comment']}\n"
+                    "--------------------------------------\n"
+                )
+
+            self.ids.result.text = result_text
+
+        except Exception as e:
+            self.ids.result.text = str(e)
 
 
 class YouTubeSentimentApp(App):
 
     def build(self):
-        kv_file = os.path.join(os.path.dirname(__file__), "sentiment.kv")
+        kv_file = os.path.join(
+            os.path.dirname(__file__),
+            "sentiment.kv"
+        )
+
         return Builder.load_file(kv_file)
 
 

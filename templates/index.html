@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>YouTube Sentiment Dashboard</title>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- ChartJS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- CSS -->
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest"
+        href="{{ url_for('static', filename='manifest.json') }}">
+
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#8b5cf6">
+
+    <!-- App Icon -->
+    <link rel="apple-touch-icon"
+        href="{{ url_for('static', filename='icons/icon-192.png') }}">
+
+</head>
+
+<body>
+
+<div class="background"></div>
+
+<div class="dashboard">
+
+    <!-- Sidebar -->
+
+    <aside class="sidebar">
+
+        <div class="logo">
+
+            <i class="fab fa-youtube"></i>
+
+            <span>YouTube AI</span>
+
+        </div>
+
+        <ul>
+
+            <li class="active">
+
+                <i class="fas fa-chart-line"></i>
+
+                Dashboard
+
+            </li>
+
+            <li>
+
+                <i class="fas fa-chart-pie"></i>
+
+                Analytics
+
+            </li>
+
+            <li>
+
+                <i class="fas fa-comments"></i>
+
+                Comments
+
+            </li>
+
+            <li>
+
+                <i class="fas fa-video"></i>
+
+                Videos
+
+            </li>
+
+            <li>
+
+                <i class="fas fa-gear"></i>
+
+                Settings
+
+            </li>
+
+        </ul>
+
+    </aside>
+
+    <!-- Main -->
+
+    <main class="main">
+
+        <!-- Header -->
+
+        <header class="topbar">
+
+            <div>
+
+                <h1>Dashboard</h1>
+
+                <p>AI Powered YouTube Sentiment Analysis</p>
+
+            </div>
+
+            <div class="profile">
+
+                <i class="fas fa-bell"></i>
+
+                <img src="https://i.pravatar.cc/60">
+
+            </div>
+
+        </header>
+
+        <!-- Search -->
+
+        <section class="glass-card search-card">
+
+    <input
+        type="text"
+        id="video_url"
+        placeholder="Paste YouTube Video URL">
+
+    <button onclick="analyzeVideo()">
+
+        <i class="fas fa-magnifying-glass"></i>
+
+        Analyze
+
+    </button>
+
+    <button id="installBtn" style="display:none;">
+
+        <i class="fas fa-download"></i>
+
+        Install App
+
+    </button>
+
+</section>
+
+        <!-- Loading -->
+
+        <div id="loading">
+
+            <div class="loader"></div>
+
+            <p>Analyzing comments...</p>
+
+        </div>
+
+        <!-- Video Card -->
+
+        <section class="glass-card video-card">
+
+            <img id="thumbnail">
+
+            <div>
+
+                <h2 id="title">Video Title</h2>
+
+                <p id="channel">Channel Name</p>
+
+                <p id="views"></p>
+
+            </div>
+
+        </section>
+
+        <!-- Statistics -->
+
+        <section class="stats">
+
+            <div class="stat-card">
+
+                <i class="fas fa-comments"></i>
+
+                <h2 id="total">0</h2>
+
+                <span>Total Comments</span>
+
+            </div>
+
+            <div class="stat-card positive">
+
+                <i class="fas fa-face-smile"></i>
+
+                <h2 id="positive">0</h2>
+
+                <span>Positive</span>
+
+            </div>
+
+            <div class="stat-card neutral">
+
+                <i class="fas fa-face-meh"></i>
+
+                <h2 id="neutral">0</h2>
+
+                <span>Neutral</span>
+
+            </div>
+
+            <div class="stat-card negative">
+
+                <i class="fas fa-face-frown"></i>
+
+                <h2 id="negative">0</h2>
+
+                <span>Negative</span>
+
+            </div>
+
+        </section>
+
+        <!-- Charts -->
+
+        <section class="charts">
+
+            <div class="glass-card">
+
+                <h2>
+
+                    <i class="fas fa-chart-pie"></i>
+
+                    Sentiment Distribution
+
+                </h2>
+
+                <canvas id="pieChart"></canvas>
+
+            </div>
+
+            <div class="glass-card">
+
+                <h2>
+
+                    <i class="fas fa-gauge-high"></i>
+
+                    Overall Score
+
+                </h2>
+
+                <canvas id="gaugeChart"></canvas>
+
+                <h1 id="score">0%</h1>
+
+            </div>
+
+        </section>
+
+        <!-- Search Comments -->
+
+        <section class="glass-card">
+
+            <input
+                type="text"
+                id="searchComment"
+                placeholder="Search comments...">
+
+        </section>
+
+        <!-- Comments -->
+
+        <section class="glass-card">
+
+            <div class="comment-title">
+
+                <h2>
+
+                    <i class="fas fa-comment-dots"></i>
+
+                    Comments
+
+                </h2>
+
+            </div>
+
+            <div id="comments"></div>
+
+        </section>
+
+        <!-- Toast -->
+
+        <div id="toast"></div>
+
+    </main>
+
+</div>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+
+<script>
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+        navigator.serviceWorker
+            .register("/static/sw.js")
+            .then(() => console.log("✅ Service Worker Registered"))
+            .catch(err => console.log(err));
+    });
+}
+</script>
+
+</body>
+</html>

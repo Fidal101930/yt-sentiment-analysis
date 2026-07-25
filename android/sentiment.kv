@@ -2,27 +2,33 @@ MainScreen:
 
 <MainScreen>:
     orientation: "vertical"
-    padding: 15
-    spacing: 10
+    padding: 20
+    spacing: 15
 
     TextInput:
         id: video_url
-        hint_text: "Paste YouTube Video URL"
+        hint_text: "Enter YouTube URL"
         multiline: False
         size_hint_y: None
-        height: "45dp"
+        height: "40dp"
 
     Button:
         text: "Analyze"
         size_hint_y: None
-        height: "50dp"
+        height: "45dp"
         on_release: root.analyze()
+
+    Image:
+        id: chart_image
+        size_hint_y: 0.45
+        allow_stretch: True
+        keep_ratio: True
 
     ScrollView:
         Label:
             id: result
             text: "Results will appear here"
-            size_hint_y: None
             text_size: self.width, None
+            size_hint_y: None
             height: self.texture_size[1]
             valign: "top"
