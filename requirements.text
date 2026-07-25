@@ -1,7 +1,7 @@
-streamlit
-google-api-python-client
+Flask
+gunicorn
 pandas
 textblob
+google-api-python-client
 matplotlib
-wordcloud
-python-dotenv
+requests

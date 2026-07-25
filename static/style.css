@@ -1,0 +1,824 @@
+/* ==========================================
+   Google Font
+========================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* ==========================================
+   Reset
+========================================== */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
+}
+
+html{
+    scroll-behavior:smooth;
+}
+
+body{
+
+    background:#0f172a;
+    color:#ffffff;
+    overflow-x:hidden;
+
+}
+
+/* ==========================================
+   Animated Background
+========================================== */
+
+.background{
+
+    position:fixed;
+    inset:0;
+
+    background:
+        radial-gradient(circle at 20% 20%,rgba(139,92,246,.45),transparent 30%),
+        radial-gradient(circle at 80% 15%,rgba(59,130,246,.35),transparent 30%),
+        radial-gradient(circle at 70% 80%,rgba(236,72,153,.25),transparent 30%),
+        linear-gradient(135deg,#0f172a,#111827,#1e1b4b);
+
+    z-index:-2;
+
+}
+
+.background::before{
+
+    content:"";
+
+    position:absolute;
+    inset:0;
+
+    backdrop-filter:blur(80px);
+
+}
+
+/* ==========================================
+   Dashboard Layout
+========================================== */
+
+.dashboard{
+
+    display:grid;
+
+    grid-template-columns:260px 1fr;
+
+    min-height:100vh;
+
+}
+
+/* ==========================================
+   Sidebar
+========================================== */
+
+.sidebar{
+
+    background:rgba(255,255,255,.05);
+
+    backdrop-filter:blur(25px);
+
+    border-right:1px solid rgba(255,255,255,.08);
+
+    padding:35px 25px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:flex-start;
+
+}
+
+.logo{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:15px;
+
+    font-size:28px;
+
+    font-weight:700;
+
+    color:#ff0000;
+
+    margin-bottom:50px;
+
+}
+
+.logo span{
+
+    color:white;
+
+    font-size:22px;
+
+}
+
+.sidebar ul{
+
+    list-style:none;
+
+}
+
+.sidebar li{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:14px;
+
+    padding:16px 20px;
+
+    margin-bottom:12px;
+
+    border-radius:14px;
+
+    cursor:pointer;
+
+    transition:.35s;
+
+    color:#d1d5db;
+
+}
+
+.sidebar li:hover{
+
+    background:rgba(255,255,255,.08);
+
+    transform:translateX(6px);
+
+}
+
+.sidebar li.active{
+
+    background:linear-gradient(135deg,#7c3aed,#3b82f6);
+
+    color:white;
+
+    box-shadow:0 10px 25px rgba(124,58,237,.35);
+
+}
+
+/* ==========================================
+   Main
+========================================== */
+
+.main{
+
+    padding:35px;
+
+}
+
+/* ==========================================
+   Top Bar
+========================================== */
+
+.topbar{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-bottom:35px;
+
+}
+
+.topbar h1{
+
+    font-size:38px;
+
+    font-weight:700;
+
+}
+
+.topbar p{
+
+    color:#94a3b8;
+
+    margin-top:8px;
+
+}
+
+.profile{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:20px;
+
+}
+
+.profile i{
+
+    font-size:22px;
+
+    cursor:pointer;
+
+}
+
+.profile img{
+
+    width:55px;
+
+    height:55px;
+
+    border-radius:50%;
+
+    border:3px solid #8b5cf6;
+
+}
+
+/* ==========================================
+   Glass Cards
+========================================== */
+
+.glass-card{
+
+    background:rgba(255,255,255,.06);
+
+    border:1px solid rgba(255,255,255,.08);
+
+    backdrop-filter:blur(20px);
+
+    border-radius:24px;
+
+    padding:25px;
+
+    margin-bottom:25px;
+
+    transition:.35s;
+
+}
+
+.glass-card:hover{
+
+    transform:translateY(-5px);
+
+    box-shadow:0 15px 40px rgba(0,0,0,.30);
+
+}
+
+/* ==========================================
+   Search Box
+========================================== */
+
+.search-card{
+
+    display:flex;
+
+    gap:18px;
+
+}
+
+.search-card input{
+
+    flex:1;
+
+    border:none;
+
+    outline:none;
+
+    background:#1e293b;
+
+    color:white;
+
+    padding:18px 20px;
+
+    border-radius:14px;
+
+    font-size:16px;
+
+}
+
+.search-card input::placeholder{
+
+    color:#94a3b8;
+
+}
+
+.search-card button{
+
+    border:none;
+
+    padding:18px 28px;
+
+    border-radius:14px;
+
+    cursor:pointer;
+
+    font-size:16px;
+
+    font-weight:600;
+
+    color:white;
+
+    background:linear-gradient(135deg,#8b5cf6,#3b82f6);
+
+    transition:.35s;
+
+}
+
+.search-card button:hover{
+
+    transform:translateY(-3px);
+
+    box-shadow:0 12px 30px rgba(59,130,246,.35);
+
+}
+
+/* ==========================================
+   Loading
+========================================== */
+
+#loading{
+
+    display:none;
+
+    text-align:center;
+
+    margin:25px 0;
+
+}
+
+.loader{
+
+    width:55px;
+
+    height:55px;
+
+    border:6px solid rgba(255,255,255,.15);
+
+    border-top:6px solid #8b5cf6;
+
+    border-radius:50%;
+
+    margin:auto;
+
+    animation:spin 1s linear infinite;
+
+}
+
+@keyframes spin{
+
+    to{
+
+        transform:rotate(360deg);
+
+    }
+
+}
+
+/* ==========================================
+   Video Card
+========================================== */
+
+.video-card{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:25px;
+
+}
+
+.video-card img{
+
+    width:260px;
+
+    border-radius:18px;
+
+    object-fit:cover;
+
+}
+
+.video-card h2{
+
+    font-size:28px;
+
+    margin-bottom:10px;
+
+}
+
+.video-card p{
+
+    color:#cbd5e1;
+
+    margin-top:6px;
+
+}
+
+/* ==========================================
+   Stats
+========================================== */
+
+.stats{
+
+    display:grid;
+
+    grid-template-columns:repeat(4,1fr);
+
+    gap:22px;
+
+    margin-bottom:30px;
+
+}
+
+.stat-card{
+
+    background:rgba(255,255,255,.06);
+
+    border:1px solid rgba(255,255,255,.08);
+
+    border-radius:22px;
+
+    padding:25px;
+
+    text-align:center;
+
+    transition:.35s;
+
+}
+
+.stat-card:hover{
+
+    transform:translateY(-8px);
+
+    box-shadow:0 15px 35px rgba(0,0,0,.25);
+
+}
+
+.stat-card i{
+
+    font-size:32px;
+
+    margin-bottom:15px;
+
+    color:#60a5fa;
+
+}
+
+.stat-card h2{
+
+    font-size:36px;
+
+    margin-bottom:8px;
+
+}
+
+.stat-card span{
+
+    color:#cbd5e1;
+
+}
+
+.stat-card.positive i{
+
+    color:#22c55e;
+
+}
+
+.stat-card.neutral i{
+
+    color:#f59e0b;
+
+}
+
+.stat-card.negative i{
+
+    color:#ef4444;
+
+}
+
+/* ==========================================
+   Charts Section
+========================================== */
+
+.charts{
+    display:grid;
+    grid-template-columns:2fr 1fr;
+    gap:25px;
+    margin-bottom:25px;
+}
+
+.charts .glass-card{
+    min-height:420px;
+    position:relative;
+}
+
+.charts h2{
+    margin-bottom:20px;
+    font-size:22px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.charts canvas{
+    width:100% !important;
+    height:300px !important;
+}
+
+#gaugeChart{
+    height:240px !important;
+}
+
+#score{
+    text-align:center;
+    margin-top:15px;
+    font-size:52px;
+    font-weight:700;
+    background:linear-gradient(90deg,#8b5cf6,#38bdf8);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+}
+
+/* ==========================================
+   Search Comment
+========================================== */
+
+#searchComment{
+    width:100%;
+    padding:16px 18px;
+    border:none;
+    outline:none;
+    border-radius:14px;
+    background:#1e293b;
+    color:#fff;
+    font-size:16px;
+}
+
+#searchComment::placeholder{
+    color:#94a3b8;
+}
+
+/* ==========================================
+   Comments
+========================================== */
+
+.comment-title{
+    margin-bottom:20px;
+}
+
+.comment-title h2{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+#comments{
+    max-height:650px;
+    overflow-y:auto;
+    padding-right:10px;
+}
+
+.comment{
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.06);
+    border-radius:16px;
+    padding:18px;
+    margin-bottom:16px;
+    transition:.3s;
+}
+
+.comment:hover{
+    transform:translateY(-3px);
+    box-shadow:0 10px 25px rgba(0,0,0,.25);
+}
+
+.comment p{
+    margin:10px 0;
+    line-height:1.6;
+    color:#e2e8f0;
+}
+
+.comment .badge{
+    display:inline-block;
+    padding:6px 12px;
+    border-radius:30px;
+    color:white;
+    font-size:13px;
+    font-weight:600;
+}
+
+.badge.positive{
+    background:#22c55e;
+}
+
+.badge.neutral{
+    background:#f59e0b;
+}
+
+.badge.negative{
+    background:#ef4444;
+}
+
+/* ==========================================
+   Toast
+========================================== */
+
+#toast{
+    position:fixed;
+    bottom:30px;
+    right:30px;
+    background:#111827;
+    color:white;
+    padding:15px 22px;
+    border-radius:14px;
+    opacity:0;
+    pointer-events:none;
+    transition:.4s;
+    border-left:5px solid #8b5cf6;
+    z-index:999;
+}
+
+#toast.show{
+    opacity:1;
+}
+
+/* ==========================================
+   Custom Scrollbar
+========================================== */
+
+::-webkit-scrollbar{
+    width:10px;
+}
+
+::-webkit-scrollbar-track{
+    background:#0f172a;
+}
+
+::-webkit-scrollbar-thumb{
+    background:#8b5cf6;
+    border-radius:30px;
+}
+
+::-webkit-scrollbar-thumb:hover{
+    background:#3b82f6;
+}
+
+/* ==========================================
+   Floating Glow Animation
+========================================== */
+
+.glass-card::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    border-radius:24px;
+    background:linear-gradient(
+        120deg,
+        transparent,
+        rgba(255,255,255,.08),
+        transparent
+    );
+    opacity:0;
+    transition:.4s;
+    pointer-events:none;
+}
+
+.glass-card:hover::before{
+    opacity:1;
+}
+
+/* ==========================================
+   Fade Animation
+========================================== */
+
+@keyframes fadeUp{
+
+    from{
+        opacity:0;
+        transform:translateY(30px);
+    }
+
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+
+}
+
+.glass-card,
+.stat-card{
+    animation:fadeUp .7s ease;
+}
+
+/* ==========================================
+   Responsive
+========================================== */
+
+@media(max-width:1200px){
+
+    .stats{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .charts{
+        grid-template-columns:1fr;
+    }
+
+}
+
+@media(max-width:900px){
+
+    .dashboard{
+        grid-template-columns:1fr;
+    }
+
+    .sidebar{
+        display:none;
+    }
+
+    .main{
+        padding:20px;
+    }
+
+    .video-card{
+        flex-direction:column;
+        text-align:center;
+    }
+
+    .video-card img{
+        width:100%;
+        max-width:400px;
+    }
+
+}
+
+@media(max-width:600px){
+
+    .stats{
+        grid-template-columns:1fr;
+    }
+
+    .search-card{
+        flex-direction:column;
+    }
+
+    .topbar{
+        flex-direction:column;
+        align-items:flex-start;
+        gap:20px;
+    }
+
+    #score{
+        font-size:40px;
+    }
+
+}
+
+/* ==========================================
+   Install Button
+========================================== */
+
+#installBtn{
+
+    margin-top:18px;
+
+    padding:16px 28px;
+
+    border:none;
+
+    border-radius:14px;
+
+    cursor:pointer;
+
+    font-size:16px;
+
+    font-weight:600;
+
+    color:white;
+
+    background:linear-gradient(135deg,#ff4d4d,#7c4dff);
+
+    transition:.35s;
+
+    display:none;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:10px;
+
+    box-shadow:0 10px 25px rgba(124,77,255,.35);
+
+}
+
+#installBtn:hover{
+
+    transform:translateY(-3px);
+
+    box-shadow:0 15px 35px rgba(124,77,255,.55);
+
+}
