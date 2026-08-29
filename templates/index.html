@@ -305,16 +305,7 @@
 
 <script src="{{ url_for('static', filename='script.js') }}"></script>
 
-<script>
-if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-        navigator.serviceWorker
-            .register("/static/sw.js")
-            .then(() => console.log("✅ Service Worker Registered"))
-            .catch(err => console.log(err));
-    });
-}
-</script>
+
 
 </body>
 </html>
