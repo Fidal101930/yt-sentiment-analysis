@@ -1,374 +1,220 @@
-// =============================================
-// YouTube Sentiment Dashboard
-// script.js - Part 4A
-// =============================================
-
-// Global Variables
-
 let pieChart = null;
 let gaugeChart = null;
-let commentsData = [];
 
-// =============================================
-// Analyze Video
-// =============================================
+
+// ======================================================
+// ANALYZE VIDEO
+// ======================================================
 
 async function analyzeVideo() {
 
-    const url = document.getElementById("video_url").value.trim();
+    const videoUrl = document.getElementById("video_url").value.trim();
 
-    if (url === "") {
-
+    if (!videoUrl) {
         showToast("Please enter a YouTube URL.");
-
         return;
     }
 
-    document.getElementById("loading").style.display = "block";
+    const loading = document.getElementById("loading");
+
+    loading.style.display = "block";
+
+    console.log("1. Sending URL:", videoUrl);
 
     try {
 
         const response = await fetch("/analyze", {
-
             method: "POST",
-
             headers: {
-
                 "Content-Type": "application/json"
-
             },
-
             body: JSON.stringify({
-
-                video_url: url
-
+                video_url: videoUrl
             })
-
         });
 
-        const data = await response.json();
+        console.log("2. HTTP status:", response.status);
 
-        document.getElementById("loading").style.display = "none";
+        // Read the response as text FIRST.
+        // This lets us see Flask errors even when it doesn't return JSON.
+        const responseText = await response.text();
+
+        console.log("3. Raw server response:", responseText);
+
+        let data;
+
+        try {
+            data = JSON.parse(responseText);
+        }
+        catch (jsonError) {
+            throw new Error(
+                "Flask returned non-JSON response: " +
+                responseText.substring(0, 300)
+            );
+        }
+
+        console.log("4. Parsed response:", data);
+
+        if (!response.ok) {
+            throw new Error(
+                data.error || `Server returned ${response.status}`
+            );
+        }
 
         if (data.error) {
-
-            showToast(data.error);
-
-            return;
+            throw new Error(data.error);
         }
 
-        updateDashboard(data);
+        // -----------------------------
+        // VIDEO DETAILS
+        // -----------------------------
 
-    }
+        if (data.video) {
 
-    catch (error) {
+            document.getElementById("title").textContent =
+                data.video.title || "Unknown title";
 
-        document.getElementById("loading").style.display = "none";
+            document.getElementById("channel").textContent =
+                data.video.channel || "Unknown channel";
 
-        console.error(error);
+            document.getElementById("views").textContent =
+                "Views: " +
+                Number(data.video.views || 0).toLocaleString();
 
-        showToast("Unable to connect to Flask server.");
+            const thumbnail =
+                document.getElementById("thumbnail");
 
-    }
-
-}
-
-// =============================================
-// Update Dashboard
-// =============================================
-
-function updateDashboard(data) {
-
-    animateCounter("total", data.total_comments);
-
-    animateCounter("positive", data.positive);
-
-    animateCounter("neutral", data.neutral);
-
-    animateCounter("negative", data.negative);
-
-    // Video Information
-
-    if (data.thumbnail)
-        document.getElementById("thumbnail").src = data.thumbnail;
-
-    if (data.title)
-        document.getElementById("title").innerHTML = data.title;
-
-    if (data.channel)
-        document.getElementById("channel").innerHTML =
-            "Channel : " + data.channel;
-
-    if (data.views)
-        document.getElementById("views").innerHTML =
-            "Views : " + Number(data.views).toLocaleString();
-
-    commentsData = data.comments;
-
-    createPieChart(
-
-        data.positive,
-
-        data.neutral,
-
-        data.negative
-
-    );
-
-    createGauge(
-
-        data.positive,
-
-        data.total_comments
-
-    );
-
-    displayComments(commentsData);
-
-}
-
-// =============================================
-// Animated Counter
-// =============================================
-
-function animateCounter(id, value) {
-
-    const element = document.getElementById(id);
-
-    let start = 0;
-
-    const duration = 1200;
-
-    const increment = value / (duration / 20);
-
-    const timer = setInterval(() => {
-
-        start += increment;
-
-        if (start >= value) {
-
-            start = value;
-
-            clearInterval(timer);
-
+            if (data.video.thumbnail) {
+                thumbnail.src = data.video.thumbnail;
+                thumbnail.style.display = "block";
+            }
+        }
+        else {
+            console.warn("No video object returned.");
         }
 
-        element.innerHTML = Math.floor(start);
+        // -----------------------------
+        // COUNTS
+        // -----------------------------
 
-    }, 20);
+        const total = Number(data.total_comments || 0);
+        const positive = Number(data.positive || 0);
+        const neutral = Number(data.neutral || 0);
+        const negative = Number(data.negative || 0);
 
-}
+        document.getElementById("total").textContent = total;
+        document.getElementById("positive").textContent = positive;
+        document.getElementById("neutral").textContent = neutral;
+        document.getElementById("negative").textContent = negative;
 
-// =============================================
-// Search Comments
-// =============================================
+        // -----------------------------
+        // SCORE
+        // -----------------------------
 
-document.getElementById("searchComment").addEventListener(
+        const score =
+            total > 0
+                ? Math.round((positive / total) * 100)
+                : 0;
 
-    "keyup",
+        document.getElementById("score").textContent =
+            score + "%";
 
-    function () {
+        // -----------------------------
+        // CHARTS
+        // -----------------------------
 
-        const keyword = this.value.toLowerCase();
-
-        const filtered = commentsData.filter(comment =>
-
-            comment.Comment.toLowerCase().includes(keyword)
-
+        createPieChart(
+            positive,
+            neutral,
+            negative
         );
 
-        displayComments(filtered);
+        createGaugeChart(score);
+
+        // -----------------------------
+        // COMMENTS
+        // -----------------------------
+
+        displayComments(
+            data.comments || []
+        );
+
+        showToast("Analysis completed successfully.");
 
     }
+    catch (error) {
 
-);
+        console.error(
+            "ANALYZE ERROR:",
+            error
+        );
 
-// =============================================
-// Toast Notification
-// =============================================
+        showToast(
+            error.message
+        );
 
-function showToast(message) {
+    }
+    finally {
 
-    const toast = document.getElementById("toast");
+        loading.style.display = "none";
 
-    toast.innerHTML = message;
-
-    toast.classList.add("show");
-
-    setTimeout(() => {
-
-        toast.classList.remove("show");
-
-    }, 3000);
-
+    }
 }
 
-// =============================================
-// Pie Chart
-// =============================================
+
+// ======================================================
+// PIE CHART
+// ======================================================
 
 function createPieChart(positive, neutral, negative) {
 
-    const ctx = document.getElementById("pieChart").getContext("2d");
+    const canvas = document.getElementById("pieChart");
+
+    if (!canvas) {
+        return;
+    }
+
+    const total = positive + neutral + negative;
+
+    // Don't create an empty chart
+    if (total === 0) {
+
+        if (pieChart) {
+            pieChart.destroy();
+            pieChart = null;
+        }
+
+        return;
+    }
 
     if (pieChart) {
         pieChart.destroy();
     }
 
-    pieChart = new Chart(ctx, {
+    pieChart = new Chart(canvas, {
 
         type: "doughnut",
 
         data: {
 
             labels: [
-
                 "Positive",
-
                 "Neutral",
-
                 "Negative"
-
             ],
 
             datasets: [{
 
                 data: [
-
                     positive,
-
                     neutral,
-
                     negative
-
                 ],
 
                 backgroundColor: [
-
                     "#22c55e",
-
-                    "#f59e0b",
-
+                    "#facc15",
                     "#ef4444"
-
-                ],
-
-                borderColor: [
-
-                    "#22c55e",
-
-                    "#f59e0b",
-
-                    "#ef4444"
-
-                ],
-
-                borderWidth: 2,
-
-                hoverOffset: 18
-
-            }]
-
-        },
-
-        options: {
-
-            responsive: true,
-
-            maintainAspectRatio: false,
-
-            cutout: "65%",
-
-            plugins: {
-
-                legend: {
-
-                    position: "bottom",
-
-                    labels: {
-
-                        color: "#ffffff",
-
-                        padding: 20,
-
-                        font: {
-
-                            size: 14,
-
-                            weight: "bold"
-
-                        }
-
-                    }
-
-                }
-
-            },
-
-            animation: {
-
-                animateRotate: true,
-
-                duration: 1500
-
-            }
-
-        }
-
-    });
-
-}
-
-// =============================================
-// Gauge Chart
-// =============================================
-
-function createGauge(positive, total) {
-
-    const score = total === 0
-
-        ? 0
-
-        : Math.round((positive / total) * 100);
-
-    document.getElementById("score").innerHTML = score + "%";
-
-    const ctx = document.getElementById("gaugeChart").getContext("2d");
-
-    if (gaugeChart) {
-        gaugeChart.destroy();
-    }
-
-    let gaugeColor = "#22c55e";
-
-    if (score < 75)
-        gaugeColor = "#f59e0b";
-
-    if (score < 45)
-        gaugeColor = "#ef4444";
-
-    gaugeChart = new Chart(ctx, {
-
-        type: "doughnut",
-
-        data: {
-
-            datasets: [{
-
-                data: [
-
-                    score,
-
-                    100 - score
-
-                ],
-
-                backgroundColor: [
-
-                    gaugeColor,
-
-                    "#273549"
-
                 ],
 
                 borderWidth: 0
@@ -383,87 +229,110 @@ function createGauge(positive, total) {
 
             maintainAspectRatio: false,
 
-            rotation: -90,
-
-            circumference: 180,
-
-            cutout: "78%",
-
             plugins: {
 
                 legend: {
-
-                    display: false
-
-                },
-
-                tooltip: {
-
-                    enabled: false
-
+                    position: "bottom"
                 }
-
-            },
-
-            animation: {
-
-                duration: 1800,
-
-                easing: "easeOutBounce"
 
             }
 
         }
 
     });
-
 }
+// ======================================================
+// GAUGE CHART
+// ======================================================
 
-// =============================================
-// Dashboard Entrance Animation
-// =============================================
+function createGaugeChart(score) {
 
-function animateCards() {
+    const canvas =
+        document.getElementById("gaugeChart");
 
-    const cards = document.querySelectorAll(
+    if (!canvas) {
+        return;
+    }
 
-        ".glass-card, .stat-card"
 
+    if (gaugeChart) {
+        gaugeChart.destroy();
+    }
+
+
+    gaugeChart = new Chart(
+        canvas,
+        {
+
+            type: "doughnut",
+
+            data: {
+
+                labels: [
+                    "Score",
+                    "Remaining"
+                ],
+
+                datasets: [
+
+                    {
+
+                        data: [
+                            score,
+                            100 - score
+                        ]
+
+                    }
+
+                ]
+
+            },
+
+            options: {
+
+                responsive: true,
+
+                maintainAspectRatio: false,
+
+                circumference: 180,
+
+                rotation: -90,
+
+                plugins: {
+
+                    legend: {
+                        display: false
+                    }
+
+                }
+
+            }
+
+        }
     );
 
-    cards.forEach((card, index) => {
-
-        card.style.opacity = "0";
-
-        card.style.transform = "translateY(30px)";
-
-        setTimeout(() => {
-
-            card.style.transition = "0.6s ease";
-
-            card.style.opacity = "1";
-
-            card.style.transform = "translateY(0)";
-
-        }, index * 100);
-
-    });
-
 }
 
-window.addEventListener("load", animateCards);
 
-// =============================================
-// Display Comments
-// =============================================
+// ======================================================
+// DISPLAY COMMENTS
+// ======================================================
+
+// ======================================================
+// DISPLAY COMMENTS
+// ======================================================
 
 function displayComments(comments) {
 
     const container = document.getElementById("comments");
 
+    if (!container) {
+        return;
+    }
+
     container.innerHTML = "";
 
-    if (comments.length === 0) {
+    if (!comments || comments.length === 0) {
 
         container.innerHTML = `
             <div class="comment">
@@ -476,248 +345,182 @@ function displayComments(comments) {
 
     comments.forEach((item, index) => {
 
-        const sentiment = item.Sentiment.toLowerCase();
+        // Support both possible backend formats
+        const text =
+            item.comment ||
+            item.Comment ||
+            item.text ||
+            "No comment text";
 
-        const icon = sentiment === "positive"
-            ? "😊"
-            : sentiment === "neutral"
-            ? "😐"
-            : "😞";
+        const sentiment =
+            item.sentiment ||
+            item.Sentiment ||
+            "Neutral";
 
-        container.innerHTML += `
+        // Safely convert to lowercase
+        const sentimentClass =
+            String(sentiment).toLowerCase();
 
-            <div class="comment fadeIn">
+        const commentDiv =
+            document.createElement("div");
 
-                <div class="comment-header">
+        commentDiv.className = "comment";
 
-                    <span class="badge ${sentiment}">
-                        ${icon} ${item.Sentiment}
-                    </span>
+        commentDiv.innerHTML = `
+            <div class="comment-header">
 
-                    <span>#${index + 1}</span>
+                <span class="badge ${sentimentClass}">
+                    ${getSentimentIcon(sentiment)}
+                    ${escapeHTML(String(sentiment))}
+                </span>
 
-                </div>
-
-                <p>
-
-                    ${item.Comment}
-
-                </p>
+                <span>#${index + 1}</span>
 
             </div>
 
+            <p>${escapeHTML(String(text))}</p>
         `;
 
-    });
+        container.appendChild(commentDiv);
 
+    });
 }
 
-// =============================================
-// Press ENTER to Analyze
-// =============================================
 
-document
-.getElementById("video_url")
-.addEventListener("keypress", function(e){
+// ======================================================
+// SENTIMENT ICON
+// ======================================================
 
-    if(e.key === "Enter"){
+function getSentimentIcon(sentiment) {
 
-        analyzeVideo();
+    const value =
+        String(sentiment).toLowerCase();
 
+    if (value === "positive") {
+        return "😊";
     }
 
-});
+    if (value === "negative") {
+        return "😞";
+    }
 
-// =============================================
-// Clear Search
-// =============================================
-
-function clearSearch(){
-
-    document.getElementById("searchComment").value="";
-
-    displayComments(commentsData);
-
+    return "😐";
 }
 
-// =============================================
-// Export Comments as CSV
-// =============================================
 
-function exportCSV(){
+// ======================================================
+// ESCAPE HTML
+// ======================================================
 
-    if(commentsData.length===0){
+function escapeHTML(text) {
 
-        showToast("Nothing to export.");
+    const div = document.createElement("div");
 
+    div.textContent = text;
+
+    return div.innerHTML;
+}
+
+
+// ======================================================
+// SEARCH COMMENTS
+// ======================================================
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        const search =
+            document.getElementById(
+                "searchComment"
+            );
+
+
+        if (!search) {
+            return;
+        }
+
+
+        search.addEventListener(
+            "input",
+            function () {
+
+                const query =
+                    search.value.toLowerCase();
+
+
+                const comments =
+                    document.querySelectorAll(
+                        ".comment-item"
+                    );
+
+
+                comments.forEach(
+                    comment => {
+
+                        const text =
+                            comment.textContent
+                            .toLowerCase();
+
+
+                        if (
+                            text.includes(query)
+                        ) {
+
+                            comment.style.display =
+                                "block";
+
+                        }
+
+                        else {
+
+                            comment.style.display =
+                                "none";
+
+                        }
+
+                    }
+                );
+
+            }
+        );
+
+    }
+);
+
+
+// ======================================================
+// TOAST
+// ======================================================
+
+function showToast(message) {
+
+    const toast =
+        document.getElementById("toast");
+
+
+    if (!toast) {
+        alert(message);
         return;
-
     }
 
-    let csv="Sentiment,Comment\n";
 
-    commentsData.forEach(item=>{
+    toast.textContent =
+        message;
 
-        let comment=item.Comment.replace(/"/g,'""');
 
-        csv+=`${item.Sentiment},"${comment}"\n`;
+    toast.classList.add("show");
 
-    });
 
-    const blob=new Blob([csv],{
+    setTimeout(
+        function () {
 
-        type:"text/csv"
+            toast.classList.remove(
+                "show"
+            );
 
-    });
-
-    const url=window.URL.createObjectURL(blob);
-
-    const a=document.createElement("a");
-
-    a.href=url;
-
-    a.download="youtube_sentiment.csv";
-
-    document.body.appendChild(a);
-
-    a.click();
-
-    document.body.removeChild(a);
-
-}
-
-// =============================================
-// Copy Results
-// =============================================
-
-function copySummary(){
-
-    const text=
-
-`YouTube Sentiment Analysis
-
-Total Comments : ${document.getElementById("total").innerText}
-
-Positive : ${document.getElementById("positive").innerText}
-
-Neutral : ${document.getElementById("neutral").innerText}
-
-Negative : ${document.getElementById("negative").innerText}
-
-Overall Score : ${document.getElementById("score").innerText}`;
-
-    navigator.clipboard.writeText(text);
-
-    showToast("Summary copied.");
-
-}
-
-// =============================================
-// Auto Scroll
-// =============================================
-
-function scrollToComments(){
-
-    document.getElementById("comments")
-
-    .scrollIntoView({
-
-        behavior:"smooth"
-
-    });
-
-}
-
-// =============================================
-// Dashboard Reset
-// =============================================
-
-function resetDashboard(){
-
-    document.getElementById("total").innerHTML="0";
-
-    document.getElementById("positive").innerHTML="0";
-
-    document.getElementById("neutral").innerHTML="0";
-
-    document.getElementById("negative").innerHTML="0";
-
-    document.getElementById("score").innerHTML="0%";
-
-    document.getElementById("comments").innerHTML="";
-
-    document.getElementById("thumbnail").src="";
-
-    document.getElementById("title").innerHTML="Video Title";
-
-    document.getElementById("channel").innerHTML="";
-
-    document.getElementById("views").innerHTML="";
-
-    if(pieChart){
-
-        pieChart.destroy();
-
-        pieChart=null;
-
-    }
-
-    if(gaugeChart){
-
-        gaugeChart.destroy();
-
-        gaugeChart=null;
-
-    }
-
-}
-
-// =============================================
-// Welcome Message
-// =============================================
-
-window.onload=function(){
-
-    animateCards();
-
-    showToast("Welcome to YouTube Sentiment Dashboard 🚀");
-
-};
-
-// =============================
-// Install PWA
-// =============================
-
-let deferredPrompt;
-
-const installBtn = document.getElementById("installBtn");
-
-window.addEventListener("beforeinstallprompt", (e) => {
-
-    e.preventDefault();
-
-    deferredPrompt = e;
-
-    if (installBtn) {
-        installBtn.style.display = "inline-flex";
-    }
-
-});
-
-if (installBtn) {
-
-    installBtn.addEventListener("click", async () => {
-
-        installBtn.style.display = "none";
-
-        deferredPrompt.prompt();
-
-        const { outcome } = await deferredPrompt.userChoice;
-
-        console.log("Install:", outcome);
-
-        deferredPrompt = null;
-
-    });
+        },
+        3000
+    );
 
 }
