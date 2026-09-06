@@ -1,7 +1,8 @@
 Flask
 gunicorn
 pandas
-textblob
 google-api-python-client
+google-genai
+python-dotenv
 matplotlib
 requests
