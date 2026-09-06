@@ -332,11 +332,11 @@ function displayComments(comments) {
 
     container.innerHTML = "";
 
-    if (!comments || comments.length === 0) {
+    if (!Array.isArray(comments) || comments.length === 0) {
 
         container.innerHTML = `
             <div class="comment">
-                <p>No comments found.</p>
+                <p>No comments available.</p>
             </div>
         `;
 
@@ -345,21 +345,27 @@ function displayComments(comments) {
 
     comments.forEach((item, index) => {
 
-        // Support both possible backend formats
-        const text =
-            item.comment ||
-            item.Comment ||
-            item.text ||
-            "No comment text";
+        const commentText =
+            String(item.comment ?? "");
 
         const sentiment =
-            item.sentiment ||
-            item.Sentiment ||
-            "Neutral";
+            String(item.sentiment ?? "Unclassified")
+                .trim();
 
-        // Safely convert to lowercase
         const sentimentClass =
-            String(sentiment).toLowerCase();
+            sentiment.toLowerCase();
+
+        let icon = "😐";
+
+        if (sentimentClass === "positive") {
+            icon = "😊";
+        } else if (sentimentClass === "negative") {
+            icon = "😞";
+        } else if (sentimentClass === "neutral") {
+            icon = "😐";
+        } else {
+            icon = "❓";
+        }
 
         const commentDiv =
             document.createElement("div");
@@ -370,19 +376,17 @@ function displayComments(comments) {
             <div class="comment-header">
 
                 <span class="badge ${sentimentClass}">
-                    ${getSentimentIcon(sentiment)}
-                    ${escapeHTML(String(sentiment))}
+                    ${icon} ${escapeHTML(sentiment)}
                 </span>
 
                 <span>#${index + 1}</span>
 
             </div>
 
-            <p>${escapeHTML(String(text))}</p>
+            <p>${escapeHTML(commentText)}</p>
         `;
 
         container.appendChild(commentDiv);
-
     });
 }
 

@@ -1,229 +1,90 @@
 from flask import Flask, request, jsonify, render_template
 from utils import fetch_comments, analyze_sentiment, get_video_details
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import io
-import base64
 import traceback
 
 app = Flask(__name__)
 
-
-# -----------------------------
-# Home Page
-# -----------------------------
 @app.route("/")
 def home():
     return render_template("index.html")
 
 
-# -----------------------------
-# Analyze API
-# -----------------------------
 @app.route("/analyze", methods=["POST"])
 def analyze():
-
-    data = request.get_json()
-
-    if not data or "video_url" not in data:
-        return jsonify({
-            "error": "Please provide a YouTube URL."
-        }), 400
-
-    video_url = data["video_url"]
-
     try:
-
-        # Video information
-        video = get_video_details(video_url)
-
-        # Comments
-        comments = fetch_comments(video_url)
-
-        if len(comments) == 0:
-            return jsonify({
-                "error": "No comments found."
-            }), 404
-
-        df = analyze_sentiment(comments)
-
-        sentiment = df["Sentiment"].value_counts()
-
-        positive = int(sentiment.get("Positive", 0))
-        neutral = int(sentiment.get("Neutral", 0))
-        negative = int(sentiment.get("Negative", 0))
-
-        # Pie Chart
-        plt.figure(figsize=(5, 5))
-
-        plt.pie(
-            [positive, neutral, negative],
-            labels=["Positive", "Neutral", "Negative"],
-            autopct="%1.1f%%",
-            startangle=90,
-            colors=[
-                "#00E676",
-                "#FFC107",
-                "#F44336"
-            ]
-        )
-
-        plt.title("Sentiment Distribution")
-
-        buffer = io.BytesIO()
-
-        plt.savefig(buffer,
-                    format="png",
-                    bbox_inches="tight")
-
-        buffer.seek(0)
-
-        chart = base64.b64encode(buffer.read()).decode()
-
-        plt.close()
-
-        return jsonify({
-
-            "title": video["title"],
-            "thumbnail": video["thumbnail"],
-            "channel": video["channel"],
-            "views": video["views"],
-
-            "total_comments": len(df),
-
-            "positive": positive,
-            "neutral": neutral,
-            "negative": negative,
-
-            "comments": df.to_dict(orient="records"),
-
-            "chart": chart
-
-        })
-
-    except Exception as e:
-
-        import traceback
-        traceback.print_exc()
-
-        return jsonify({
-            "error": str(e)
-        }), 500
-
-
-if __name__ == "__main__":
-
-    app.run(
-        host="0.0.0.0",
-        port=5000,
-        debug=True
-    )
-
-    from flask import Flask, request, jsonify, render_template
-
-from utils import (
-    fetch_comments,
-    analyze_sentiment,
-    get_video_details
-)
-
-app = Flask(__name__)
-
-
-# ==========================================
-# HOME
-# ==========================================
-
-@app.route("/")
-def home():
-
-    return render_template("index.html")
-
-
-# ==========================================
-# ANALYZE YOUTUBE VIDEO
-# ==========================================
-
-@app.route("/analyze", methods=["POST"])
-def analyze():
-
-    try:
-
-        # Get JSON sent by JavaScript
         data = request.get_json()
 
         if not data:
-
             return jsonify({
-                "error": "No data received"
+                "success": False,
+                "error": "No data received."
             }), 400
 
-
-        # Get YouTube URL
-        video_url = data.get("video_url")
-
+        video_url = data.get("video_url", "").strip()
 
         if not video_url:
-
             return jsonify({
-                "error": "YouTube video URL is required"
+                "success": False,
+                "error": "YouTube video URL is required."
             }), 400
 
+        print("\n====================================")
+        print("ANALYZING VIDEO")
+        print("URL:", video_url)
+        print("====================================")
 
-        print("Analyzing:", video_url)
+        # -----------------------------
+        # 1. Get video details
+        # -----------------------------
+        print("\nFetching video details...")
 
+        video = get_video_details(video_url)
 
-        # ==================================
-        # GET VIDEO DETAILS
-        # ==================================
-
-        video_details = get_video_details(
-            video_url
-        )
-
-
-        if not video_details:
-
+        if not video:
             return jsonify({
-                "error": "Could not find video details"
+                "success": False,
+                "error": "Could not find video details."
             }), 400
 
+        print("Video:", video["title"])
 
-        # ==================================
-        # FETCH COMMENTS
-        # ==================================
+        # -----------------------------
+        # 2. Fetch comments
+        # -----------------------------
+        print("\nFetching comments...")
 
         comments = fetch_comments(
-            video_url
+            video_url,
+            max_comments=10
         )
-
 
         if not comments:
-
             return jsonify({
-                "error": "No comments found for this video"
-            }), 400
+                "success": False,
+                "error": "No comments found for this video."
+            }), 404
 
+        print(f"Fetched {len(comments)} comments.")
 
-        print(
-            f"Fetched {len(comments)} comments"
-        )
+        # -----------------------------
+        # 3. Gemini sentiment analysis
+        # -----------------------------
+        print("\nRunning Gemini sentiment analysis...")
 
+        df = analyze_sentiment(comments)
 
-        # ==================================
-        # SENTIMENT ANALYSIS
-        # ==================================
+        if df.empty:
+            return jsonify({
+                "success": False,
+                "error": "Gemini did not return any sentiment results."
+            }), 500
 
-        df = analyze_sentiment(
-            comments
-        )
+        print("\nSentiment results:")
+        print(df.to_string(index=False))
 
-
-        # ==================================
-        # COUNT SENTIMENTS
-        # ==================================
-
+        # -----------------------------
+        # 4. Count sentiments
+        # -----------------------------
         positive = int(
             (df["Sentiment"] == "Positive").sum()
         )
@@ -236,111 +97,78 @@ def analyze():
             (df["Sentiment"] == "Negative").sum()
         )
 
-
         total = len(df)
 
+        score = round(
+            (positive / total) * 100
+        ) if total > 0 else 0
 
-        # ==================================
-        # OVERALL SCORE
-        # ==================================
-
-        if total > 0:
-
-            score = round(
-                (positive / total) * 100
-            )
-
-        else:
-
-            score = 0
-
-
-        # ==================================
-        # COMMENTS FOR FRONTEND
-        # ==================================
-
+        # -----------------------------
+        # 5. Prepare comments
+        # -----------------------------
         comment_list = []
 
         for _, row in df.iterrows():
 
             comment_list.append({
-
-                "comment":
-                    row["Comment"],
-
-                "sentiment":
-                    row["Sentiment"]
-
+                "comment": str(row["Comment"]),
+                "sentiment": str(row["Sentiment"])
             })
 
-
-        # ==================================
-        # RESPONSE
-        # ==================================
-
-        return jsonify({
+        # -----------------------------
+        # 6. Response
+        # -----------------------------
+        response = {
 
             "success": True,
 
-            "total_comments":
-                total,
+            "video": {
+                "title": video["title"],
+                "channel": video["channel"],
+                "published": video["published"],
+                "thumbnail": video["thumbnail"],
+                "views": video["views"]
+            },
 
-            "positive":
-                positive,
+            "total_comments": total,
 
-            "neutral":
-                neutral,
+            "positive": positive,
 
-            "negative":
-                negative,
+            "neutral": neutral,
 
-            "score":
-                score,
+            "negative": negative,
 
-            "title":
-                video_details["title"],
+            "score": score,
 
-            "channel":
-                video_details["channel"],
+            "comments": comment_list
+        }
 
-            "published":
-                video_details["published"],
+        print("\n====================================")
+        print("ANALYSIS COMPLETE")
+        print("Positive:", positive)
+        print("Neutral:", neutral)
+        print("Negative:", negative)
+        print("====================================\n")
 
-            "thumbnail":
-                video_details["thumbnail"],
-
-            "views":
-                video_details["views"],
-
-            "comments":
-                comment_list
-
-        })
-
+        return jsonify(response)
 
     except Exception as e:
 
-        print(
-            "ERROR:",
-            str(e)
-        )
+        print("\n====================================")
+        print("FLASK ERROR")
+        print("====================================")
+
+        traceback.print_exc()
+
+        print("====================================\n")
 
         return jsonify({
-
             "success": False,
-
-            "error":
-                str(e)
-
+            "error": str(e)
         }), 500
 
 
-# ==========================================
-# RUN SERVER
-# ==========================================
-
 if __name__ == "__main__":
-
     app.run(
         host="0.0.0.0",
         port=5000,
